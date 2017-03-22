@@ -58,7 +58,7 @@ class Pixel:
 	def __init__(self, x, y, val):
 		self.x = x
 		self.y = y
-		self.state = [x,y]
+		self.state = str(x)+str(y)
 		self.f = None
 		self.h = None
 		self.value = val
@@ -72,27 +72,33 @@ class Pixel:
 		self.kids = []
 
 	def is_goal(self, map):
-		if self.x == map.goal(0) and self.y == map.goal(1):
+		if self.x == map.goal[0] and self.y == map.goal[1]:
 			return True
 		else:
 			return False
 
 	def calc_h(self, map):
-		return math.fabs(self.x - map.goal.x) + math.fabs(self.y - map.goal.y)
+		return math.fabs(self.x - map.goal[0]) + math.fabs(self.y - map.goal[1])
 
 	def calc_f(self, map):							#calculate f = g+h
-		return self.calc_h(map) + self.arc_cost()
+		return self.calc_h(map) + self.g
 
 	def generate_all_successors(self, map):
 		successors = []
-		pixel_up = map[(self.x),(self.y + 1)]
-		pixel_down = map[(self.x),(self.y - 1)]
-		pixel_left = map[(self.x - 1), (self.y)]
-		pixel_right = map[(self.x + 1), (self.y)]
-		successors.append(pixel_up)
-		successors.append(pixel_down)
-		successors.append(pixel_left)
-		successors.append(pixel_right)
+		#print map.gridHeight
+		if (self.y + 1 <= map.gridHeight - 1):
+			pixel_up = map.map[(self.x),(self.y + 1)]
+			successors.append(pixel_up)
+		if (self.y - 1>= 0):
+			pixel_down = map.map[(self.x),(self.y - 1)]
+			successors.append(pixel_down)
+		if (self.x + 1<= map.gridLength - 1):
+			pixel_right = map.map[(self.x + 1), (self.y)]
+			successors.append(pixel_right)
+		if (self.x - 1>= 0):
+			pixel_left = map.map[(self.x - 1), (self.y)]
+			successors.append(pixel_left)
+
 		return successors
 
 	def arc_cost(self, pixel):
@@ -117,39 +123,35 @@ class AStar:
 		self.closed_list = []  # closed list is empty
 		self.map = map
 
-	def best_first_search(self):  # Main method of A*
-		n0 = self.start  # makes n0 the startnode
+	def best_first_search(self):
+		n0 = self.start
 
-		n0.calc_h(self.map)  # heuristic for the startnode
-		n0.g = 0  # g = 0 for the startnode
-		n0.calc_f(self.map)  # h+g
+		n0.calc_h(self.map)
+		n0.g = 0
+		n0.calc_f(self.map)
 
-		self.open_list.append(n0)  # places the startnode in the open list
+		self.open_list.append(n0)
 
 		# Agenda Loop
 		# while no solution
 		while (self.open_list):  # Agenda
-			x = self.search_queue_pop(self.search_type,
-									  self.open_list)  # Node currently working on set to the chosen node in the open list
-			self.closed_list.append(x)  # Puts the node in the closed list
-			if x.is_goal(self.map):  # fix if check											#Returns the path if the current node is the goal
-				return self.path(x)  # return the goal path
-			successors = x.generate_all_successors(self.map)  # Generate all the succesors of the current node
+			x = self.search_queue_pop(self.search_type, self.open_list)
+			self.closed_list.append(x)
+			if x.is_goal(self.map):
+				return self.path(x)
+			successors = x.generate_all_successors(self.map)
 
-			for s in successors:  # For each successor of the current node
-				if (
-				s.state) in self.created_dict:  # sets the current successor to the allready created node, if it exists
+			for s in successors:
+				if (s.state) in self.created_dict:
 					s = self.created_dict[(s.state)]
-
-				if s not in self.open_list and s not in self.closed_list:  # if not in open or closed list
-					self.attach_and_eval(s, x, self.map)  # run attach and eval for that node and the current node
-					self.open_list.append(s)  # add the node to the agenda queue(open list)
-					self.created_dict[(s.state)] = s  # Places the new node in the created dictionary
-				elif x.g + x.arc_cost(
-						s) < s.g:  # else if g of the current node + the cost of x to s is less than the g value of current successor's g
-					self.attach_and_eval(s, x)  # run attach and eval of s and x
-					if s in self.closed_list:  # if s allraedy is in closed list
-						self.propagate_path_improvements(s)  # run propagate_path_improvements
+				if s not in self.open_list and s not in self.closed_list:
+					self.attach_and_eval(s, x, self.map)
+					self.open_list.append(s)
+					self.created_dict[(s.state)] = s
+				elif x.g + x.arc_cost(s) < s.g:
+					self.attach_and_eval(s, x)
+					if s in self.closed_list:
+						self.propagate_path_improvements(s)
 
 		return []
 
@@ -183,5 +185,6 @@ class AStar:
 		goal_path = [x.state]
 		while x.parent:
 			x = x.parent
+			print x.x, x.y
 			goal_path.append(x.state)
 		return goal_path[::-1]

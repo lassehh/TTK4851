@@ -33,6 +33,8 @@ def main():
     Map.printMap()
     print Map.start
     AStar = GenericAStar.AStar(Map, "BestFS")
+    AStar.best_first_search()
+    print 'fuck yes'
 
 
     # Fix pixel.state: kan ikke vaare liste...
